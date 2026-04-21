@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Room Details - {{ room.room_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-bed me-2"></i>Room {{ room.room_number }}
+                    </h2>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Room Image -->
+                    {% if room.image %}
+                    <div class="text-center mb-4">
+                        <img src="{{ room.image.url }}" 
+                             alt="Room {{ room.room_number }}" 
+                             class="img-fluid rounded mb-3" 
+                             style="max-height: 400px; object-fit: cover;">
+                    </div>
+                    {% endif %}
+
+                    <div class="row mb-4">
+                        <!-- Room Details -->
+                        <div class="col-md-6">
+                            <h4><i class="fas fa-info-circle me-2"></i>Room Details</h4>
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item">
+                                    <i class="fas fa-tag me-2"></i><strong>Type:</strong> {{ room.get_room_type_display }}</div>
+                                <div class="list-group-item">
+                                    <i class="fas fa-dollar-sign me-2"></i><strong>Price:</strong> ${{ room.price }}/night</div>
+                                <div class="list-group-item">
+                                    <i class="fas fa-users me-2"></i><strong>Capacity:</strong> {{ room.capacity }} persons</div>
+                                <div class="list-group-item">
+                                    <i class="fas fa-star me-2"></i><strong>Rating:</strong> 
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= room.get_average_rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Room Description -->
+                        <div class="col-md-6">
+                            <h4><i class="fas fa-align-left me-2"></i>Description</h4>
+                            <p class="text-muted">{{ room.description }}</p>
+
+                            <!-- Amenities -->
+                            {% if room.amenities %}
+                            <h5 class="mt-4"><i class="fas fa-concierge-bell me-2"></i>Amenities</h5>
+                            <div class="row">
+                                {% if room.amenities.wifi %}
+                                <div class="col-6">
+                                    <div class="badge bg-info text-dark p-2 mb-2">
+                                        <i class="fas fa-wifi me-1"></i>WiFi
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if room.amenities.tv %}
+                                <div class="col-6">
+                                    <div class="badge bg-info text-dark p-2 mb-2">
+                                        <i class="fas fa-tv me-1"></i>TV
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if room.amenities.ac %}
+                                <div class="col-6">
+                                    <div class="badge bg-info text-dark p-2 mb-2">
+                                        <i class="fas fa-snowflake me-1"></i>AC
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if room.amenities.minibar %}
+                                <div class="col-6">
+                                    <div class="badge bg-info text-dark p-2 mb-2">
+                                        <i class="fas fa-glass-martini me-1"></i>Minibar
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Availability and Booking -->
+                    <div class="card-footer bg-transparent border-top">
+                        {% if room.is_available %}
+                        <div class="text-center">
+                            <a href="{% url 'reserve_room' room.id %}" class="btn btn-success btn-lg">
+                                <i class="fas fa-calendar-plus me-2"></i>Book Now
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning text-center" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>This room is currently not available.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="text-center mt-3">
+                <a href="{% url 'room_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Room List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

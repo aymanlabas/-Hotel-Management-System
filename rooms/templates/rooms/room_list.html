@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Available Rooms{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Available Rooms</h1>
+    
+    <div class="row">
+        {% for room in rooms %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <!-- Room Image -->
+                {% if room.image %}
+                <img src="{{ room.image.url }}" 
+                     class="card-img-top" 
+                     alt="Room {{ room.room_number }}" 
+                     style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light text-center" style="height: 200px;">
+                    <i class="fas fa-bed fa-3x text-muted mt-5"></i>
+                </div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <h5 class="card-title">Room {{ room.room_number }}</h5>
+                    <p class="card-text">
+                        <strong>Type:</strong> {{ room.get_room_type_display }}<br>
+                        <strong>Price:</strong> ${{ room.price }}/night<br>
+                        <strong>Capacity:</strong> {{ room.capacity }} persons
+                    </p>
+                    <p class="card-text text-truncate">{{ room.description }}</p>
+                </div>
+                
+                <div class="card-footer bg-transparent border-top-0 text-center">
+                    <a href="{% url 'room_detail' room.id %}" class="btn btn-primary">
+                        <i class="fas fa-info-circle"></i> View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle"></i> No rooms available at the moment.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

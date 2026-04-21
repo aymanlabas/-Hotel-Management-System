@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+
+{% block title %}Add New Room{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transition: transform 0.2s;
+    }
+    .form-card:hover {
+        transform: translateY(-5px);
+    }
+    .form-control:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+    }
+    .input-group-text {
+        background-color: #f8f9fa;
+        border-right: none;
+    }
+    .input-group-text i {
+        color: #6c757d;
+    }
+    .amenities-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+    }
+    .form-check {
+        margin-bottom: 1rem;
+    }
+    .form-check-input:checked {
+        background-color: #3498db;
+        border-color: #3498db;
+    }
+    .btn-primary {
+        background-color: #3498db;
+        border-color: #3498db;
+    }
+    .btn-primary:hover {
+        background-color: #2980b9;
+        border-color: #2980b9;
+    }
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card form-card">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            Add New Room
+                        </h4>
+                        <a href="{% url 'admin_dashboard' %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    <form method="post" action="{% url 'admin_add_room' %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="number" class="form-label">Room Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">#</span>
+                                        <input type="text" class="form-control" id="number" name="number" required 
+                                               placeholder="Enter room number">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="room_type" class="form-label">Room Type</label>
+                                    <select class="form-select" id="room_type" name="room_type" required>
+                                        <option value="single">
+                                            <i class="fas fa-bed me-2"></i>Single Room
+                                        </option>
+                                        <option value="double">
+                                            <i class="fas fa-bed me-2"></i>Double Room
+                                        </option>
+                                        <option value="suite">
+                                            <i class="fas fa-home me-2"></i>Suite
+                                        </option>
+                                        <option value="deluxe">
+                                            <i class="fas fa-star me-2"></i>Deluxe Room
+                                        </option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="price" class="form-label">Price per Night</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-dollar-sign"></i>
+                                        </span>
+                                        <input type="number" class="form-control" id="price" name="price" 
+                                               min="0" step="0.01" required 
+                                               placeholder="Enter price">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="capacity" class="form-label">Capacity</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-users"></i>
+                                        </span>
+                                        <input type="number" class="form-control" id="capacity" name="capacity" 
+                                               min="1" required 
+                                               placeholder="Enter capacity">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="image" class="form-label">Room Image</label>
+                                    <div class="input-group">
+                                        <input type="file" class="form-control" id="image" name="image" 
+                                               accept="image/*" required>
+                                        <label class="input-group-text" for="image">
+                                            <i class="fas fa-upload"></i>
+                                            Upload
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" name="description" 
+                                              rows="4" required 
+                                              placeholder="Enter room description"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="amenities-section mb-4">
+                            <h5 class="mb-3">
+                                <i class="fas fa-check-circle me-2"></i>Amenities
+                            </h5>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="amenities[]" 
+                                               value="wifi" id="wifi">
+                                        <label class="form-check-label" for="wifi">
+                                            <i class="fas fa-wifi me-2"></i>WiFi
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="amenities[]" 
+                                               value="tv" id="tv">
+                                        <label class="form-check-label" for="tv">
+                                            <i class="fas fa-tv me-2"></i>TV
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="amenities[]" 
+                                               value="ac" id="ac">
+                                        <label class="form-check-label" for="ac">
+                                            <i class="fas fa-snowflake me-2"></i>Air Conditioning
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="amenities[]" 
+                                               value="minibar" id="minibar">
+                                        <label class="form-check-label" for="minibar">
+                                            <i class="fas fa-glass-martini me-2"></i>Minibar
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Add Room
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

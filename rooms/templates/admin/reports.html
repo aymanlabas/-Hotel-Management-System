@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Date Range Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h4 class="mb-0">Hotel Performance Reports</h4>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-end">
+                        <input type="text" id="daterange" class="form-control" style="width: 250px;" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <!-- Revenue Card -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Revenue</h6>
+                            <h4 class="mb-0" id="current-revenue">${{ current_revenue }}</h4>
+                            <small class="text-muted">vs ${{ previous_revenue }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span id="revenue-change" class="badge {% if revenue_change >= 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ revenue_change }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADR Card -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted mb-2">Average Daily Rate</h6>
+                            <h4 class="mb-0" id="current-adr">${{ current_adr }}</h4>
+                            <small class="text-muted">vs ${{ previous_adr }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span id="adr-change" class="badge {% if adr_change >= 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ adr_change }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Occupancy Card -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted mb-2">Occupancy Rate</h6>
+                            <h4 class="mb-0" id="current-occupancy">{{ current_occupancy }}%</h4>
+                            <small class="text-muted">vs {{ previous_occupancy }}%</small>
+                        </div>
+                        <div class="text-end">
+                            <span id="occupancy-change" class="badge {% if occupancy_change >= 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ occupancy_change }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancellation Card -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted mb-2">Cancellation Rate</h6>
+                            <h4 class="mb-0" id="current-cancellation">{{ current_cancellation }}%</h4>
+                            <small class="text-muted">vs {{ previous_cancellation }}%</small>
+                        </div>
+                        <div class="text-end">
+                            <span id="cancellation-change" class="badge {% if cancellation_change >= 0 %}bg-danger{% else %}bg-success{% endif %}">
+                                {{ cancellation_change }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <!-- Revenue Chart -->
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Revenue Trend</h5>
+                    <canvas id="revenueChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Type Occupancy -->
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Room Type Occupancy</h5>
+                    <canvas id="occupancyChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservation Distribution -->
+    <div class="row g-4">
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Reservation Status Distribution</h5>
+                    <canvas id="reservationChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Buttons -->
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Export Reports</h5>
+                    <div class="d-flex gap-3">
+                        <button id="exportPdf" class="btn btn-primary">
+                            <i class="fas fa-file-pdf me-2"></i>Export as PDF
+                        </button>
+                        <button id="exportExcel" class="btn btn-success">
+                            <i class="fas fa-file-excel me-2"></i>Export as Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: none;
+        border-radius: 0.5rem;
+    }
+    .card-title {
+        color: #344767;
+        font-weight: 600;
+    }
+    .badge {
+        padding: 0.5em 0.75em;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Parse data from Django template
+    const chartData = {
+        revenue: {
+            dates: JSON.parse('{{ revenue_dates|safe }}'),
+            values: JSON.parse('{{ revenue_data|safe }}')
+        },
+        roomTypes: JSON.parse('{{ room_types_labels|safe }}'),
+        occupancy: JSON.parse('{{ occupancy_data|safe }}'),
+        reservations: JSON.parse('{{ reservation_distribution|safe }}')
+    };
+
+    // Chart.js defaults
+    Chart.defaults.font.family = "'Inter', 'Helvetica', 'Arial', sans-serif";
+    Chart.defaults.font.size = 13;
+    Chart.defaults.color = '#64748b';
+
+    // Initialize charts
+    const revenueChart = new Chart(document.getElementById('revenueChart'), {
+        type: 'line',
+        data: {
+            labels: chartData.revenue.dates,
+            datasets: [{
+                label: 'Daily Revenue',
+                data: chartData.revenue.values,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: (value) => '$' + value
+                    }
+                }
+            }
+        }
+    });
+
+    const occupancyChart = new Chart(document.getElementById('occupancyChart'), {
+        type: 'bar',
+        data: {
+            labels: chartData.roomTypes,
+            datasets: [{
+                label: 'Occupancy Rate',
+                data: chartData.occupancy,
+                backgroundColor: '#10b981',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: (value) => value + '%'
+                    }
+                }
+            }
+        }
+    });
+
+    const reservationChart = new Chart(document.getElementById('reservationChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Confirmed', 'Cancelled', 'Completed'],
+            datasets: [{
+                data: chartData.reservations,
+                backgroundColor: ['#3b82f6', '#ef4444', '#10b981']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+
+    // Initialize date range picker
+    $('#daterange').daterangepicker({
+        startDate: moment().subtract(29, 'days'),
+        endDate: moment(),
+        ranges: {
+           'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+           'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+           'This Month': [moment().startOf('month'), moment().endOf('month')],
+           'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+        }
+    }, function(start, end) {
+        updateReportData(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
+    });
+
+    // Update report data function
+    function updateReportData(start, end) {
+        $.get('/admin/reports/data/', { start: start, end: end }, function(data) {
+            // Update statistics
+            $('#current-revenue').text('$' + data.statistics.current_revenue);
+            $('#current-adr').text('$' + data.statistics.current_adr);
+            $('#current-occupancy').text(data.statistics.current_occupancy + '%');
+            $('#current-cancellation').text(data.statistics.current_cancellation + '%');
+
+            // Update charts
+            revenueChart.data.labels = data.revenue_dates;
+            revenueChart.data.datasets[0].data = data.revenue_data;
+            revenueChart.update();
+
+            occupancyChart.data.datasets[0].data = data.occupancy_data;
+            occupancyChart.update();
+
+            reservationChart.data.datasets[0].data = data.reservation_distribution;
+            reservationChart.update();
+        });
+    }
+
+    // Export buttons
+    $('#exportPdf').click(function() {
+        const dateRange = $('#daterange').data('daterangepicker');
+        window.location.href = `/admin/reports/export/pdf/?start=${dateRange.startDate.format('YYYY-MM-DD')}&end=${dateRange.endDate.format('YYYY-MM-DD')}`;
+    });
+
+    $('#exportExcel').click(function() {
+        const dateRange = $('#daterange').data('daterangepicker');
+        window.location.href = `/admin/reports/export/excel/?start=${dateRange.startDate.format('YYYY-MM-DD')}&end=${dateRange.endDate.format('YYYY-MM-DD')}`;
+    });
+});
+</script>
+{% endblock %}

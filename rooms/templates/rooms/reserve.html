@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block title %}Book Room - {{ room.room_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-calendar-plus me-2"></i>Book Room {{ room.room_number }}
+                    </h2>
+                </div>
+                
+                <div class="card-body">
+                    <form method="post" action="{% url 'reserve_room' room.id %}" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="check_in" class="form-label">Check-in Date</label>
+                                <input type="date" class="form-control" id="check_in" name="check_in" required 
+                                       min="{{ min_date }}" max="{{ max_date }}">
+                                <div class="invalid-feedback">
+                                    Please select a valid check-in date.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="check_out" class="form-label">Check-out Date</label>
+                                <input type="date" class="form-control" id="check_out" name="check_out" required 
+                                       min="{{ min_date }}" max="{{ max_date }}">
+                                <div class="invalid-feedback">
+                                    Please select a valid check-out date.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Guest Details</label>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="first_name" class="form-label">First Name</label>
+                                        <input type="text" class="form-control" id="first_name" name="first_name" 
+                                               value="{{ request.user.first_name }}" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="last_name" class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" id="last_name" name="last_name" 
+                                               value="{{ request.user.last_name }}" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{{ request.user.email }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="guests" class="form-label">Number of Guests</label>
+                                <select class="form-select" id="guests" name="guests" required>
+                                    {% for i in "123456789" %}
+                                    <option value="{{ forloop.counter }}" 
+                                            {% if forloop.counter <= room.capacity %} 
+                                            {% if forloop.counter == 2 %}selected{% endif %}
+                                            {% else %}disabled{% endif %}>
+                                        {{ forloop.counter }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    Maximum capacity: {{ room.capacity }} guests
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="special_requests" class="form-label">Special Requests</label>
+                                <textarea class="form-control" id="special_requests" name="special_requests" 
+                                          rows="3" placeholder="Any special requests or requirements..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <h5>Reservation Summary</h5>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <p class="mb-1">
+                                            <strong>Room:</strong> {{ room.room_number }} - {{ room.get_room_type_display }}
+                                        </p>
+                                        <p class="mb-1">
+                                            <strong>Price:</strong> ${{ room.price }}/night
+                                        </p>
+                                        <p class="mb-1">
+                                            <strong>Capacity:</strong> {{ room.capacity }} guests
+                                        </p>
+                                        <p class="mb-1">
+                                            <strong>Total:</strong> $<span id="total_price">0</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-check me-2"></i>Confirm Booking
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mt-3">
+                <a href="{% url 'room_detail' room.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Room Details
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.querySelector('form.needs-validation');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+
+    // Calculate total price
+    const checkIn = document.getElementById('check_in');
+    const checkOut = document.getElementById('check_out');
+    const totalPrice = document.getElementById('total_price');
+    const roomPrice = {{ room.price }};
+
+    function calculateTotal() {
+        const checkInDate = new Date(checkIn.value);
+        const checkOutDate = new Date(checkOut.value);
+        const days = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+        totalPrice.textContent = (days * roomPrice).toFixed(2);
+    }
+
+    checkIn.addEventListener('change', calculateTotal);
+    checkOut.addEventListener('change', calculateTotal);
+
+    // Set initial check-in date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    checkIn.min = tomorrow.toISOString().split('T')[0];
+    checkIn.value = tomorrow.toISOString().split('T')[0];
+
+    // Set initial check-out date to 2 days from tomorrow
+    const checkOutMin = new Date(tomorrow);
+    checkOutMin.setDate(tomorrow.getDate() + 1);
+    checkOut.min = checkOutMin.toISOString().split('T')[0];
+    checkOut.value = checkOutMin.toISOString().split('T')[0];
+
+    // Calculate initial total
+    calculateTotal();
+});
+</script>
+{% endblock %}
+{% endblock %}

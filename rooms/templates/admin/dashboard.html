@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-card {
+        border-radius: 10px;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: transform 0.2s;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+    .card-stat {
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    .card-stat:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    .quick-actions {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        z-index: 1000;
+    }
+    .quick-actions .btn {
+        margin-bottom: 10px;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <div class="btn-group-vertical w-100">
+            <a href="{% url 'admin_user_management' %}" class="btn btn-info">
+                <i class="fas fa-users me-2"></i> User Management
+            </a>
+            <a href="{% url 'admin_add_room' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i> Add New Room
+            </a>
+            <a href="{% url 'admin_export_reports' %}?type=reservations" class="btn btn-success">
+                <i class="fas fa-download me-2"></i> Export Reports
+            </a>
+        </div>
+    </div>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-0">
+                <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
+            </h1>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-stat">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Rooms</h6>
+                            <h2 class="mb-0">{{ total_rooms }}</h2>
+                        </div>
+                        <div class="bg-primary text-white p-3 rounded-circle">
+                            <i class="fas fa-bed fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-stat">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Available Rooms</h6>
+                            <h2 class="mb-0">{{ available_rooms }}</h2>
+                        </div>
+                        <div class="bg-success text-white p-3 rounded-circle">
+                            <i class="fas fa-check fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-stat">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Active Reservations</h6>
+                            <h2 class="mb-0">{{ active_reservations }}</h2>
+                        </div>
+                        <div class="bg-info text-white p-3 rounded-circle">
+                            <i class="fas fa-calendar-check fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-stat">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Revenue</h6>
+                            <h2 class="mb-0">${{ total_revenue|floatformat:"2" }}</h2>
+                        </div>
+                        <div class="bg-warning text-white p-3 rounded-circle">
+                            <i class="fas fa-dollar-sign fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Tables -->
+    <div class="row">
+        <!-- Monthly Revenue Chart -->
+        <div class="col-xl-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Monthly Revenue
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Reservations -->
+        <div class="col-xl-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Recent Reservations
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Room</th>
+                                    <th>Guest</th>
+                                    <th>Check-in</th>
+                                    <th>Check-out</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reservation in recent_reservations %}
+                                <tr>
+                                    <td>Room {{ reservation.room.room_number }}</td>
+                                    <td>{{ reservation.user.username }}</td>
+                                    <td>{{ reservation.check_in_date }}</td>
+                                    <td>{{ reservation.check_out_date }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ reservation.status_color }}">
+                                            {{ reservation.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Management -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-hotel me-2"></i>Room Management
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Room Number</th>
+                                    <th>Type</th>
+                                    <th>Price</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for room in rooms %}
+                                <tr>
+                                    <td>{{ room.room_number }}</td>
+                                    <td>{{ room.get_room_type_display }}</td>
+                                    <td>${{ room.price }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ room.is_available|yesno:"success,danger" }}">
+                                            {{ room.is_available|yesno:"Available,Occupied" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'admin_edit_room' room.id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <a href="{% url 'admin_delete_room' room.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this room?')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Monthly Revenue Chart
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    const monthlyRevenueData = JSON.parse('{{ monthly_revenue|safe }}');
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: monthlyRevenueData.map(item => item.month),
+            datasets: [{
+                label: 'Monthly Revenue',
+                data: monthlyRevenueData.map(item => item.revenue),
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1,
+                fill: true,
+                backgroundColor: 'rgba(75, 192, 192, 0.1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Monthly Revenue Over Last 6 Months'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}
